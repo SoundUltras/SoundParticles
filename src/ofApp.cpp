@@ -16,6 +16,7 @@ void ofApp::setup(){
     head_rot.set(0,0,0);
     handposR.set(270,120,-20);
     handposL.set(270,120,20);
+    cameraMode = "kinect";
     
     resetParticles();
     
@@ -160,7 +161,12 @@ void ofApp::draw(){
     
     ofBackgroundGradient(ofColor(60,60,60), ofColor(10,10,10));
     
-    cam2.begin();
+    if(cameraMode == "human"){
+        cam1.begin();
+    }
+    else if(cameraMode == "kinect"){
+        cam2.begin();
+    }
     
     for(unsigned int i = 0; i < p.size(); i++){
         p[i].draw();
@@ -209,7 +215,13 @@ void ofApp::draw(){
     floor.set(2000, 1, 2000);
     //floor.draw();
     
-    cam2.end();
+    if(cameraMode == "human"){
+        cam1.end();
+    }
+    else if(cameraMode == "kinect"){
+        cam2.end();
+    }
+
 
 }
 
@@ -227,6 +239,13 @@ void ofApp::keyPressed(int key){
 
     if( key == ' ' ){
         resetParticles();
+    }
+    
+    if( key == 'k'){
+        cameraMode = "kinect";
+    }
+    if( key == 'h'){
+        cameraMode = "human";
     }
     
 }

@@ -50,6 +50,8 @@ class ofApp : public ofBaseApp{
     
         string headpos, handpos, headrot;
     
+        string cameraMode;
+    
     private:
         ofxOscReceiver receiver;
         ofxOscSender sender;
