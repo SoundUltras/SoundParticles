@@ -32,6 +32,8 @@ void demoParticle::reset(){
     
     scale = ofRandom(0.5, 1.0);
     
+    drag  = ofRandom(0.95, 0.998);
+    
 }
 
 //------------------------------------------------------------------
@@ -40,15 +42,14 @@ void demoParticle::update(ofPoint hand_pos){
     //1 - APPLY THE FORCES BASED ON WHICH MODE WE ARE IN
     
     if( mode == PARTICLE_MODE_ATTRACT ){
-        ofPoint attractPt(hand_pos);
-        frc = attractPt-pos; // we get the attraction force/vector by looking at the mouse pos relative to our pos
+        frc = hand_pos-pos; // we get the attraction force/vector by looking at the mouse pos relative to our pos
         frc.normalize(); //by normalizing we disregard how close the particle is to the attraction point
         
+        vel *= drag; //apply drag
         vel += frc * 0.6; //apply force
     }
     else if( mode == PARTICLE_MODE_REPEL ){
-        ofPoint attractPt(hand_pos);
-        frc = attractPt-pos;
+        frc = hand_pos-pos;
         
         //let get the distance and only repel points close to the mouse
         float dist = frc.length();
@@ -59,18 +60,20 @@ void demoParticle::update(ofPoint hand_pos){
         }else{
             //if the particles are not close to us, lets add a little bit of random movement using noise. this is where uniqueVal comes in handy.
             frc.x = ofSignedNoise(uniqueVal, pos.y * 0.01, ofGetElapsedTimef()*0.2);
+            frc.y = ofSignedNoise(uniqueVal, pos.z * 0.01, ofGetElapsedTimef()*0.2);
             frc.y = ofSignedNoise(uniqueVal, pos.x * 0.01, ofGetElapsedTimef()*0.2);
-            vel += frc * 0.04;
+            vel += frc * 0.04 * 0.1;
         }
     }
     
     //2 - UPDATE OUR POSITION
     
-    pos += vel*0.2;
+    pos += vel * 0.2;
     
     
     //3 - (optional) LIMIT THE PARTICLES TO STAY ON SCREEN
     //we could also pass in bounds to check - or alternatively do this at the ofApp level
+    /*
     if( pos.x > 5000 ){
         pos.x = 5000;
         vel.x *= -1.0;
@@ -95,7 +98,7 @@ void demoParticle::update(ofPoint hand_pos){
         pos.z = 5000;
         vel.z *= -1.0;
     }
-    
+    */
 }
 
 //------------------------------------------------------------------

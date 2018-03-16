@@ -12,10 +12,10 @@ void ofApp::setup(){
     
     currentModeStr = "1 - PARTICLE_MODE_ATTRACT: attracts to right hand";
     
-    head_pos.set(300,170,0);
+    head_pos.set(0,170,300);
     head_rot.set(0,0,0);
-    handposR.set(270,120,-20);
-    handposL.set(270,120,20);
+    handposR.set(-20,120,270);
+    handposL.set(20,120,270);
     cameraMode = "kinect";
     
     resetParticles();
@@ -32,9 +32,11 @@ void ofApp::setup(){
     pointLight3.setSpecularColor( ofFloatColor(18.f/255.f,150.f/255.f,135.f/255.f) );
     
     //camera
-    cam1.setPosition(0, 0, 170);  //sight
+    cam1.setPosition(0, 170, 300);  //eye
+    cam1.setFov(160.0f);
     cam2.setPosition(0,0,0);  //kinect
-    cam2.lookAt(ofVec3f(300,0,0),ofVec3f(0,1,0));
+    cam2.lookAt(ofVec3f(0,0,300),ofVec3f(0,1,0));
+    cam2.setFov(120.0f);
     
     //OSC setup
     receiver.setup(PORT);
@@ -70,7 +72,7 @@ void ofApp::update(){
         if ( m.getAddress() == "/hand_r" ){
             handposR.x = m.getArgAsFloat( 0 ) * 100;
             handposR.y = m.getArgAsFloat( 1 ) * 100;
-            handposR.z = -m.getArgAsFloat( 2 ) * 100;
+            handposR.z = m.getArgAsFloat( 2 ) * 100;
         }
         if ( m.getAddress() == "/hand_l" ){
             handposL.x = m.getArgAsFloat( 0 ) * 100;
@@ -96,9 +98,9 @@ void ofApp::update(){
     
     //head position
     m1.setAddress( "/head_pos" );
-    m1.addFloatArg( head_pos.x /100 );
-    m1.addFloatArg( head_pos.y /100 );
-    m1.addFloatArg( head_pos.z /100 );
+    m1.addFloatArg( head_pos.x / 100 );
+    m1.addFloatArg( head_pos.y / 100 );
+    m1.addFloatArg( head_pos.z / 100 );
     sender.sendMessage( m1 );
     
     //head rotation
@@ -114,19 +116,20 @@ void ofApp::update(){
         
         //particle position
         ofPoint p_hpos = p[i].pos - head_pos;  //head center coordinates
-        ofPoint p_hpos2;  //cart2sph
-        p_hpos2.x = sqrt( pow(p_hpos.x,2)+pow(p_hpos.y,2)+pow(p_hpos.z,2) );
-        p_hpos2.y = atan2(p_hpos.y, p_hpos.x);
-        p_hpos2.z = atan2( p_hpos.z, sqrt( pow(p_hpos.x,2) + pow(p_hpos.y,2) ) );
+        
+        p_hpos2[i].x = sqrt( pow(p_hpos.x,2)+pow(p_hpos.y,2)+pow(p_hpos.z,2) );
+        p_hpos2[i].y = atan2(p_hpos.x, p_hpos.z) / M_PI * 180;
+        p_hpos2[i].z = atan2( p_hpos.y, sqrt( pow(p_hpos.z,2) + pow(p_hpos.x,2) ) ) / M_PI * 180;
         
         string oscmsg = "particle"+to_string(i);  //daijobu?
         m1.setAddress( oscmsg );
-        m1.addFloatArg( p[i].pos.x );
-        m1.addFloatArg( p[i].pos.y );
-        m1.addFloatArg( p[i].pos.z );
+        m1.addFloatArg( p_hpos2[i].x / 100 );
+        m1.addFloatArg( p_hpos2[i].y / 100 );
+        m1.addFloatArg( p_hpos2[i].z / 100 );
         sender.sendMessage( m1 );
 
     }
+
     
     //lets add a bit of movement to the attract points
     for(unsigned int i = 0; i < attractPointsWithMovement.size(); i++){
@@ -195,13 +198,13 @@ void ofApp::draw(){
     ofSetColor(255, 255, 0);
     cam_target.setPosition(target_pos.x, target_pos.y, target_pos.z);
     cam_target.set(2, 2, 2);
-    cam_target.draw();
+    //cam_target.draw();
     
-    //camera draw
+    //head draw
     ofSetColor(30, 30, 255);
     cam_target.setPosition(head_pos.x, head_pos.y, head_pos.z);
     cam_target.set(10, 10, 10);
-    cam_target.draw();
+    //cam_target.draw();
     
     //display data
     headpos = "headposition : " + ofToString( head_pos.x ) + ", " + ofToString( head_pos.y ) + ", " + ofToString( head_pos.z );

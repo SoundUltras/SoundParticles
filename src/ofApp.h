@@ -43,6 +43,8 @@ class ofApp : public ofBaseApp{
     
         ofPoint target_pos, head_rot, head_pos, handposR, handposL;
     
+        ofPoint p_hpos2[5];  //cart2sph
+    
         ofCamera cam1, cam2;
     
         ofBoxPrimitive floor, cam_target, headcam;
