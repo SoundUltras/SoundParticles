@@ -47,7 +47,7 @@ class ofApp : public ofBaseApp{
     
         ofCamera cam1, cam2;
     
-        ofBoxPrimitive floor, cam_target, headcam;
+        ofBoxPrimitive cam_target, headcam;
         ofSpherePrimitive handL,handR, head;
     
         string headpos, handpos, headrot;

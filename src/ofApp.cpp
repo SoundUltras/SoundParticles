@@ -64,20 +64,22 @@ void ofApp::resetParticles(){
 //--------------------------------------------------------------
 void ofApp::update(){
     
+    float movingscale = 2.0;
+    
     //OSC Receive
     while( receiver.hasWaitingMessages() ){
         ofxOscMessage m;
         receiver.getNextMessage( m );
         //hand position
         if ( m.getAddress() == "/hand_r" ){
-            handposR.x = m.getArgAsFloat( 0 ) * 100;
-            handposR.y = m.getArgAsFloat( 1 ) * 100;
-            handposR.z = m.getArgAsFloat( 2 ) * 100;
+            handposR.x = m.getArgAsFloat( 0 ) * 100 * movingscale;
+            handposR.y = m.getArgAsFloat( 1 ) * 100 * movingscale;
+            handposR.z = m.getArgAsFloat( 2 ) * 100 * movingscale;
         }
         if ( m.getAddress() == "/hand_l" ){
-            handposL.x = m.getArgAsFloat( 0 ) * 100;
-            handposL.y = m.getArgAsFloat( 1 ) * 100;
-            handposL.z = m.getArgAsFloat( 2 ) * 100;
+            handposL.x = m.getArgAsFloat( 0 ) * 100 * movingscale;
+            handposL.y = m.getArgAsFloat( 1 ) * 100 * movingscale;
+            handposL.z = m.getArgAsFloat( 2 ) * 100 * movingscale;
         }
         //head rotate
         else if ( m.getAddress() == "/head_rot" ) {
@@ -87,9 +89,9 @@ void ofApp::update(){
         }
         //head position
         else if ( m.getAddress() == "/head_pos" ) {
-            head_pos.x = m.getArgAsFloat( 0 ) * 100 ;
-            head_pos.y = m.getArgAsFloat( 1 ) * 100 ;
-            head_pos.z = m.getArgAsFloat( 2 ) * 100 ;
+            head_pos.x = m.getArgAsFloat( 0 ) * 100 * movingscale;
+            head_pos.y = m.getArgAsFloat( 1 ) * 100 * movingscale;
+            head_pos.z = m.getArgAsFloat( 2 ) * 100 * movingscale;
         }
     }
     
@@ -98,18 +100,20 @@ void ofApp::update(){
     
     //head position
     m1.setAddress( "/head_pos" );
-    m1.addFloatArg( head_pos.x / 100 );
-    m1.addFloatArg( head_pos.y / 100 );
-    m1.addFloatArg( head_pos.z / 100 );
+    m1.addFloatArg( head_pos.x / 100 / movingscale);
+    m1.addFloatArg( head_pos.y / 100 / movingscale );
+    m1.addFloatArg( head_pos.z / 100 / movingscale );
     sender.sendMessage( m1 );
     
+    ofxOscMessage m2;
     //head rotation
-    m1.setAddress( "/head_rot" );
-    m1.addFloatArg( head_rot.x );
-    m1.addFloatArg( head_rot.y );
-    m1.addFloatArg( head_rot.z );
-    sender.sendMessage( m1 );
+    m2.setAddress( "/head_rot" );
+    m2.addFloatArg( head_rot.x );
+    m2.addFloatArg( head_rot.y );
+    m2.addFloatArg( head_rot.z );
+    sender.sendMessage( m2 );
     
+    ofxOscMessage m3[5];
     for(unsigned int i = 0; i < p.size(); i++){
     	p[i].setMode(currentMode);
     	p[i].update(handposR);
@@ -118,15 +122,15 @@ void ofApp::update(){
         ofPoint p_hpos = p[i].pos - head_pos;  //head center coordinates
         
         p_hpos2[i].x = sqrt( pow(p_hpos.x,2)+pow(p_hpos.y,2)+pow(p_hpos.z,2) );
-        p_hpos2[i].y = atan2(p_hpos.x, p_hpos.z) / M_PI * 180;
+        p_hpos2[i].y = atan2(-p_hpos.x, -p_hpos.z) / M_PI * 180;
         p_hpos2[i].z = atan2( p_hpos.y, sqrt( pow(p_hpos.z,2) + pow(p_hpos.x,2) ) ) / M_PI * 180;
         
-        string oscmsg = "particle"+to_string(i);  //daijobu?
-        m1.setAddress( oscmsg );
-        m1.addFloatArg( p_hpos2[i].x / 100 );
-        m1.addFloatArg( p_hpos2[i].y / 100 );
-        m1.addFloatArg( p_hpos2[i].z / 100 );
-        sender.sendMessage( m1 );
+        string oscmsg = "/particle"+to_string(i+1);  //daijobu?
+        m3[i].setAddress( oscmsg );
+        m3[i].addFloatArg( p_hpos2[i].x /100/movingscale);
+        m3[i].addFloatArg( p_hpos2[i].y );
+        m3[i].addFloatArg( p_hpos2[i].z );
+        sender.sendMessage( m3[i] );
 
     }
 
@@ -151,7 +155,7 @@ void ofApp::update(){
     //camera_target
     target_pos.x = head_pos.x + 5.0 * sin(head_rot.y/180*pi) * cos(head_rot.z/180*pi);
     target_pos.y = head_pos.y + 5.0 * sin(head_rot.y/180*pi) * sin(head_rot.z/180*pi);
-    target_pos.z = head_pos.z + 5.0 * cos(head_rot.y/180*pi);
+    target_pos.z = head_pos.z - 5.0 * cos(head_rot.y/180*pi);
     
     //camera
     cam1.setPosition(head_pos.x, head_pos.y, head_pos.z);
@@ -174,9 +178,7 @@ void ofApp::draw(){
     for(unsigned int i = 0; i < p.size(); i++){
         p[i].draw();
     }
-    
-    ofSetColor(230);
-    ofDrawBitmapString(currentModeStr + "\n\nSpacebar to reset. \nKeys 1-2 to change mode.", 10, 20);
+
     
     //light draw
     ofEnableLighting();
@@ -200,23 +202,17 @@ void ofApp::draw(){
     cam_target.set(2, 2, 2);
     //cam_target.draw();
     
-    //head draw
+    //kinect draw
     ofSetColor(30, 30, 255);
-    cam_target.setPosition(head_pos.x, head_pos.y, head_pos.z);
-    cam_target.set(10, 10, 10);
-    //cam_target.draw();
+    cam_target.setPosition(0, 0, -10);
+    cam_target.set(5, 5, 5);
+    cam_target.draw();
     
     //display data
     headpos = "headposition : " + ofToString( head_pos.x ) + ", " + ofToString( head_pos.y ) + ", " + ofToString( head_pos.z );
     headrot = "headrotation : " + ofToString( head_rot.x ) + ", " + ofToString( head_rot.y ) + ", " + ofToString( head_rot.z );
     handpos = "handposition : " + ofToString( handposR.x ) + ", " + ofToString( handposR.y ) + ", " + ofToString( handposR.z );
 
-    
-    //floor
-    ofSetColor(120, 120, 120);
-    floor.setPosition(0,0,0);
-    floor.set(2000, 1, 2000);
-    //floor.draw();
     
     if(cameraMode == "human"){
         cam1.end();
